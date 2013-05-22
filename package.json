@@ -1,0 +1,17 @@
+{
+  "name": "nimbus",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "3.2.4",
+    "jade": "*",
+    "stylus": "*",
+    "node-uuid": "*",
+    "adm-zip": "*",
+    "jquery-file-upload-middleware": "*",
+    "knox": "*"
+  }
+}
