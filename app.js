@@ -30,9 +30,9 @@ upload.on('end', function(fileInfo) {
   if (fileInfo.type == 'application/zip') {
     var AdmZip = require('adm-zip');
 
-    var session = fileInfo.url.match(/\/uploads\/(.*)\//)[1]
+    var id = fileInfo.url.match(/\/uploads\/(.*)\//)[1]
 
-    var zip = new AdmZip(__dirname + '/public/uploads/' + session + '/' + fileInfo.name);
+    var zip = new AdmZip(__dirname + '/public/uploads/' + id + '/' + fileInfo.name);
     var zipEntries = zip.getEntries();
 
 
@@ -41,8 +41,6 @@ upload.on('end', function(fileInfo) {
       secret: process.env.S3_SECRET_ACCESS_KEY,
       bucket: process.env.S3_BUCKET_NAME
     });
-
-    var id = uuid.v1();
 
     zipEntries.forEach(function(zipEntry) {
       console.log(zipEntry.toString());
@@ -66,26 +64,18 @@ app.configure(function() {
   app.use(express.favicon());
   app.use(express.logger('dev'));
 
-
-  app.use(express.json());
-  app.use(express.urlencoded());
-
-  app.use(express.methodOverride());
-  app.use(express.cookieParser('your secret here'));
-  app.use(express.session());
-  app.use(app.router);
-  app.use(require('stylus').middleware(__dirname + '/public'));
-  app.use(express.static(path.join(__dirname, 'public')));
-
   app.use('/upload', function (req, res, next) {
+    id = uuid.v1();
     upload.fileHandler({
       uploadDir: function () {
-        return __dirname + '/public/uploads/' + req.sessionID
+        return __dirname + '/public/uploads/' + id
       },
       uploadUrl: function () {
-        return '/uploads/' + req.sessionID
+        return '/uploads/' + id
       }
-    })(req, res, next);
+    })(req, res, function() {
+      return { 'id': id, 'bucket': process.env.S3_BUCKET_NAME };
+    });
   });
 
   app.use('/list', function (req, res, next) {
@@ -100,6 +90,14 @@ app.configure(function() {
       res.json(files);
     });
   });
+
+  app.use(express.bodyParser());
+  app.use(express.methodOverride());
+  app.use(express.cookieParser('your secret here'));
+  app.use(express.session());
+  app.use(app.router);
+  app.use(require('stylus').middleware(__dirname + '/public'));
+  app.use(express.static(path.join(__dirname, 'public')));
 });
 
 

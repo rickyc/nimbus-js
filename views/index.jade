@@ -4,9 +4,7 @@ block content
   h1= title
   p Static site hosting... to begin, upload a zip file.
 
-  input#fileupload(type='file', name='files[]', data-url='/upload', multiple='multiple')
-  script
-    $('#fileupload').fileupload({ dataType: 'json' })
-    $('#fileupload').bind('fileuploadstop', function(e) {
-      console.log(e);
-    });
+  form#fileupload(action='/upload', enctype='multipart/form-data', method='post')
+    input#random(type='hidden', name='random', value='aweriuawerlu')
+    input(type='file', name='files[]', multiple='multiple')
+    input(type='submit')
