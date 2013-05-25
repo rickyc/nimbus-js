@@ -12,6 +12,8 @@
     "node-uuid": "*",
     "adm-zip": "*",
     "jquery-file-upload-middleware": "*",
-    "knox": "*"
+    "knox": "*",
+    "hiredis": "*",
+    "redis": "*"
   }
 }

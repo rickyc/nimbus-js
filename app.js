@@ -7,7 +7,8 @@ var express = require('express')
   , http = require('http')
   , path = require('path')
   , upload = require('jquery-file-upload-middleware')
-  , uuid = require('node-uuid');
+  , uuid = require('node-uuid')
+  , redis = require('redis');
 
 var app = express();
 
@@ -21,7 +22,7 @@ upload.configure({
 });
 
 upload.on('begin', function(fileInfo) {
-  console.log(fileInfo);
+  //console.log(fileInfo);
 });
 
 upload.on('end', function(fileInfo) {
@@ -31,24 +32,34 @@ upload.on('end', function(fileInfo) {
     var AdmZip = require('adm-zip');
 
     var id = fileInfo.url.match(/\/uploads\/(.*)\//)[1]
+    var redis_client = redis.createClient();
+    redis_client.hmset("bundle:" + id, { 'created_at': (new Date).getTime() }, redis.print);
 
     var zip = new AdmZip(__dirname + '/public/uploads/' + id + '/' + fileInfo.name);
     var zipEntries = zip.getEntries();
 
 
-    var client = require('knox').createClient({
+    var knox_client = require('knox').createClient({
       key: process.env.S3_ACCESS_KEY_ID,
       secret: process.env.S3_SECRET_ACCESS_KEY,
       bucket: process.env.S3_BUCKET_NAME
     });
 
     zipEntries.forEach(function(zipEntry) {
-      console.log(zipEntry.toString());
+      //console.log(zipEntry.toString());
       var decompressedData = zip.readFile(zipEntry);
-      console.log(decompressedData);
+      //console.log(decompressedData);
       var headers = { 'Content-Type': 'text/plain' }
-      console.log(zipEntry.entryName);
-      client.putBuffer(decompressedData, "/" + id + "/" + zipEntry.entryName.replace(/ /g, '%20'), headers, function(err, res) { });
+      //console.log(zipEntry.entryName);
+      redis_client.incr('file_id', redis.print)
+      redis_client.get('file_id', function(err, reply) {
+        var file_id = reply.toString()
+        console.log("file_id: " + file_id);
+        var name = zipEntry.entryName.replace(/ /g, '%20')
+        knox_client.putBuffer(decompressedData, "/" + id + "/" + name, headers, function(err, res) { });
+        redis_client.hmset("file:" + file_id, { 'name': name });
+        redis_client.sadd("bundle:" + id + ":files", "file:"+file_id);
+      });
     });
   }
 });
@@ -112,6 +123,7 @@ if ('development' == app.get('env')) {
 //////////////////////////////
 app.get('/', routes.index);
 app.get('/users', user.list);
+app.get('/:id', user.bundle);
 
 
 //////////////////////////////
