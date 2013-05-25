@@ -26,7 +26,7 @@ upload.on 'end', (fileInfo) ->
     AdmZip = require('adm-zip')
     id = fileInfo.url.match(/\/uploads\/(.*)\//)[1]
 
-    redis_client = redis.createClient()
+    redis_client = require('./lib/redis_connector').client()
     redis_client.hmset "bundle:#{id}",
       created_at: (new Date).getTime()
     , redis.print

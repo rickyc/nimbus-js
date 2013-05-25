@@ -4,8 +4,7 @@ exports.list = (req, res, next) ->
 
 exports.bundle = (req, res, next) ->
   files  = []
-  redis  = require 'redis'
-  client = redis.createClient()
+  client = require('../lib/redis_connector').client()
   multi  = client.multi()
 
   client.smembers "bundle:#{req.params.id}:files", (err, replies) ->
