@@ -12,3 +12,5 @@ See `package.json`
 `S3_SECRET_ACCESS_KEY`
 
 `S3_BUCKET_NAME`
+
+`APP_SECRET`
